@@ -1,0 +1,23 @@
+{
+  "name": "wechat-imitation-serve",
+  "version": "1.0.0",
+  "description": "",
+  "main": "wechat.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShiWewe/wechat-imitation-serve.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ShiWewe/wechat-imitation-serve/issues"
+  },
+  "homepage": "https://github.com/ShiWewe/wechat-imitation-serve#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}
