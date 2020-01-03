@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
@@ -63,6 +64,16 @@ io.on('connection', function (socket) {
 					throw '写入图片失败！'
 				}
 			});
+		} else if (msg.type.indexOf('file') > -1) {
+			let result = Buffer.from(msg.content, 'utf8')
+			let idx = msg.type.indexOf(',') + 1
+			let name = msg.type.slice(idx)
+			fs.writeFile(`./files/${name}`, result, err => {
+				if (err) {
+					throw '写入文件失败！'
+				}
+			});
+			recode = `时间: ${time}，\nuserId: ${msg.userId}，\n内容：['文件']\n\r`
 		} else {
 			recode = `时间: ${time}，\nuserId: ${msg.userId}，\n内容：${msg.content}\n\r`
 		}
@@ -78,6 +89,8 @@ io.on('connection', function (socket) {
 			if (i > -1) {
 				if (msg.type == 'img') {
 					userList[i]['latestNew'] = '[图片]'
+				} else if (msg.type.indexOf('file') > -1) {
+					userList[i]['latestNew'] = '[文件]'
 				} else {
 					userList[i]['latestNew'] = msg.content
 				}
@@ -85,14 +98,35 @@ io.on('connection', function (socket) {
 		}
 	});
 
+	//监听用户断开事件
 	socket.on('disconnect', () => {
-		//监听用户断开事件
 		let idx = userList.findIndex(user => user.socketId == socket.id)
 		if (idx > -1) {
 			let result = userList.splice(idx, 1)
 			io.emit('broadcastOut', result)
 		}
 	});
+
+});
+
+app.get('/download', function (req, res) {
+	let name = req.query.name;
+	let i = name.lastIndexOf('_') + 1
+	let fileName = name.slice(i)
+	let idx = name.lastIndexOf('.')
+	let exe = name.slice(idx)
+	// 只能英文？
+	let newName = 'test' + exe
+	let paths = './files/' + name;
+	let p = path.join(__dirname, paths);
+	let size = fs.statSync(p).size;
+	let f = fs.createReadStream(p);
+	res.writeHead(200, {
+		'Content-Type': 'application/force-download',
+		'Content-Disposition': 'attachment; filename=' + newName,
+		'Content-Length': size
+	});
+	f.pipe(res);
 
 });
 
