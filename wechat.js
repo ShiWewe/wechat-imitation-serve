@@ -24,25 +24,21 @@ io.on('connection', function (socket) {
 		}
 	})
 
-
-	// 登陆
-	socket.on('userLogin', () => {
-		socket.emit('handleLogin')
-	})
-
 	// console.log('客户端已经连接了');
 	socket.on('join', msg => {
-		let result = userList.find(user => user.userId == msg.userId)
+		let result = userList.find(user => user.username == msg.username)
 		if (result) {
 			// console.log('该用户已登陆', JSON.stringify(userList))
-			io.emit('mine-broadcast', {
+			// 给指定的客户端发消息（socket.id）
+			io.to(socket.id).emit('mine-broadcast', {
 				message: '该用户已登陆',
 				info: msg
-			})
+			});
 		} else {
 			// console.log('新用户', JSON.stringify(userList))
 			userList.push({
 				userId: msg.userId,
+				username: msg.username,
 				avatar: msg.avatar,
 				socketId: socket.id,
 				latestNew: ''
@@ -56,7 +52,7 @@ io.on('connection', function (socket) {
 		// 聊天内容，创建写入文件，图片
 		let time = dayjs(Date.now()).format('YYYY-MM-DD HH:mm:ss')
 		if (msg.type == 'img') {
-			recode = `时间: ${time}，\nuserId: ${msg.userId}，\n内容：['图片']\n\r`
+			recode = `时间: ${time}，\nusername: ${msg.username}，\n内容：['图片']\n\r`
 			let base64Data = msg.content.replace(/^data:image\/\w+;base64,/, "");
 			let decodeImg = Buffer.from(base64Data, 'base64')
 			fs.writeFile(`./images/${msg.userId}_${Date.now()}.png`, decodeImg, err => {
@@ -73,9 +69,9 @@ io.on('connection', function (socket) {
 					throw '写入文件失败！'
 				}
 			});
-			recode = `时间: ${time}，\nuserId: ${msg.userId}，\n内容：['文件']\n\r`
+			recode = `时间: ${time}，\nusername: ${msg.username}，\n内容：['文件']\n\r`
 		} else {
-			recode = `时间: ${time}，\nuserId: ${msg.userId}，\n内容：${msg.content}\n\r`
+			recode = `时间: ${time}，\nusername: ${msg.username}，\n内容：${msg.content}\n\r`
 		}
 		// 追加文件内容
 		fs.appendFile('./files/record.txt', recode, {}, err => {
@@ -98,7 +94,7 @@ io.on('connection', function (socket) {
 		}
 	});
 
-	//监听用户断开事件
+	// 监听用户断开事件
 	socket.on('disconnect', () => {
 		let idx = userList.findIndex(user => user.socketId == socket.id)
 		if (idx > -1) {
@@ -127,7 +123,6 @@ app.get('/download', function (req, res) {
 		'Content-Length': size
 	});
 	f.pipe(res);
-
 });
 
 http.listen(3000, function () {
