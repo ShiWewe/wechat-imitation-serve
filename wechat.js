@@ -1,4 +1,5 @@
 const fs = require('fs');
+const urlencode = require('urlencode');
 const path = require('path');
 const app = require('express')();
 const http = require('http').createServer(app);
@@ -111,8 +112,8 @@ app.get('/download', function (req, res) {
 	let fileName = name.slice(i)
 	let idx = name.lastIndexOf('.')
 	let exe = name.slice(idx)
-	// 只能英文？
-	let newName = 'test' + exe
+	// 转码
+	let newName = urlencode(fileName, "UTF-8") + exe
 	let paths = './files/' + name;
 	let p = path.join(__dirname, paths);
 	let size = fs.statSync(p).size;
